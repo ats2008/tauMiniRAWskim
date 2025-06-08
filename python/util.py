@@ -6,11 +6,12 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
     cmd_siteQ_tpl=f'dasgoclient -query="site file=@@FILE " --json > _site_{unique_tag}.json'
     fileMaps={}
     allMissingFiles=[]
+    nFound=0
     for fi,fky in enumerate(filesToProces):
         #if fi>4: break
         fl=fileDB[fky]['lfs']
         if 'parents' not in fileDB[fky]:
-            print(f"[{fi+1:>3} / {len(filesToProces)}]  > Getting parents for {fl}")
+            print(f"[nProcessed : {fi+1:>3} / {len(filesToProces)} ] [ nFound  : {nFound}]  / {len(filesToProces)} ]  > Getting parents for {fl}")
             cmd=cmd_prts_tpl.replace("@@FILE",fl)
             print(cmd)
             os.system(cmd)
@@ -49,6 +50,7 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
             fileMaps[fky]={}
             fileMaps[fky]['miniAOD']=fl
             fileMaps[fky]['parents']=pfiles
+            nFound+=1
         else:
             allMissingFiles.append(fky)
             print(f"  > All parents not on disk ! will jave to skip this MiniAOD file ({fky})")

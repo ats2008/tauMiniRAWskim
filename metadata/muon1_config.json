@@ -1,0 +1,7 @@
+{
+    "dataset" : "/Muon1/Run2025C-PromptReco-v1/MINIAOD",
+    "filelist_db" : "metadata/fileDB.MUON1.json",
+    "failedFile_db" : "metadata/missingFileDB.MUON1.json",
+    "sucessFile_db" : "metadata/sucessFileDB.MUON1.json",
+    "CONDOR_LOG_BASE" : "/afs/cern.ch/work/a/athachay/private/l1egamma/automation/Condor/logs"
+}

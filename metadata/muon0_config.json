@@ -3,5 +3,5 @@
     "filelist_db" : "metadata/fileDB.MUON0.json",
     "failedFile_db" : "metadata/missingFileDB.MUON0.json",
     "sucessFile_db" : "metadata/sucessFileDB.MUON0.json",
-    "CONDOR_LOG_BASE" : "/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/automation/condor_logs"
+    "CONDOR_LOG_BASE" : "/afs/cern.ch/work/a/athachay/private/l1egamma/automation/Condor/logs"
 }

@@ -11,6 +11,8 @@ python3 python/updateSucessfullFilesDB.py --DBFileName metadata/sucessFileDB.MUO
 ```
 
 ## Crontab config
+To edit in lxplus , use `acrontab -e`
 ```
-0 */3 * * * lxplus cd /afs/cern.ch/work/a/athachay/private/l1egamma/automation && sh cron_run.sh
+0 */3 * * * lxplus cd /afs/cern.ch/work/a/athachay/private/l1egamma/automation && sh cron_run_mu0.sh
+45 */3 * * * lxplus cd /afs/cern.ch/work/a/athachay/private/l1egamma/automation && sh cron_run_mu1.sh
 ```
