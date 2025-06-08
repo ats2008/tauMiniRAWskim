@@ -11,8 +11,11 @@ pwd=os.getcwd()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c',"--configFile", help="Config File",default='muon0_config.json')
+parser.add_argument('-n',"--nMiniAODMax", help="Number miniaods to process",default=1000000,type=int)
 parser.add_argument('-e',"--execute_parent_eval", help="Execute the skimming",action='store_true')
 parser.add_argument(     "--skip_db_update", help="Skip updaing the database with new files",action='store_true')
+parser.add_argument(     "--doCondor", help="Make condor jobs",action='store_true')
+parser.add_argument(     "--doCondorSubmission", help="submit condor jobs",action='store_true')
 parser.add_argument( "-q" , "--quiet", help="Quite mode",action='store_true')
 args = parser.parse_args()
 
@@ -27,16 +30,16 @@ with open(args.configFile) as f:
     filedb_filename=run_config['filelist_db']
     fail_filedb_filename=run_config['failedFile_db']
     sucessfull_filedb_filename=run_config['sucessFile_db']
-
+    CONDOR_LOG_BASE=run_config['CONDOR_LOG_BASE']
 destination='/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/'
 newFileStore={}
 
-cmd_prts_tpl='dasgoclient -query="file run lumi dataset=@@DSET" --json > _allfiles.json'
+cmd_prts_tpl=f'dasgoclient -query="file run lumi dataset=@@DSET" --json > _allfiles_{unique_tag}.json'
 cmd=cmd_prts_tpl.replace("@@DSET",dataset)
 print(f"Reading latest filelist from {dataset}")
 print(cmd)
 os.system(cmd)
-flistFileIn='_allfiles.json'
+flistFileIn=f'_allfiles_{unique_tag}.json'
 print(f"Opening file with run list {flistFileIn} ")
 with open(flistFileIn) as f:
     allfiles=json.load(f)
@@ -69,33 +72,26 @@ if 'timestamp' in metaData:
 filesToProces={}
 if dataset not in fileDB:
     fileDB[dataset]={}
-
-for fky in newFileStore:
+print(f"Using filedb with {len(fileDB[dataset])} files")
+ntoDo=0
+for fi,fky in enumerate(newFileStore):
     if fky not in fileDB[dataset]:
         filesToProces[fky]=newFileStore[fky]
         fileDB[dataset][fky]=newFileStore[fky]
+        ntoDo+=1
+    if ntoDo>=args.nMiniAODMax: break
 if len(filesToProces) < 1 :
     print("No New files to process ! exiting ")
+    os.system("echo echo NO Files To Process  > run.sh ; chmod +x run.sh")
     exit(0)
 
 print(f"{len(filesToProces)}  MiniAOD Files to process.\n\t\t"+
        "\n\t\t".join([str(k) for  i,k  in enumerate(filesToProces) if i <10  ]))
 
-if not args.skip_db_update:
-    cmd=f'cp {filedb_filename} bkp/{unique_tag}.{filedb_filename.split("/")[-1]}'
-    cmd=f'zip bkp/{unique_tag}.{filedb_filename.split("/")[-1]}.zip {filedb_filename}'
-    print("Backing up fileDB : ",cmd)
-    os.system(cmd)
-    with open(filedb_filename,'w') as f:
-        metaData['timestamp']=timestamp
-        metaData['prev_tag']=unique_tag
-        fileDataStore['METADATA']=metaData
-        fileDataStore['fileDB']=fileDB
-        json.dump(fileDataStore,f,indent=4)
-
 
 if args.execute_parent_eval:
-    fileMapToProcess=utl.getAllAvalableMiniRawMaps(filesToProces,fileDB[dataset])
+
+    fileMapToProcess=utl.getAllAvalableMiniRawMaps(filesToProces,fileDB[dataset],unique_tag=unique_tag,quiet=args.quiet)
     for fky in filesToProces:
         if (fky not in fileMapToProcess ) :
             print(" Registering ",fky," as missing dataset ")
@@ -104,7 +100,13 @@ if args.execute_parent_eval:
     
     commandBlock=""
     cmd_cmsRun_tpl=str(utl.CMD_CMSRUN_TPL)
-    for fky in fileMapToProcess:
+    if args.doCondor:
+        cdir=pwd+f"/Condor/{unique_tag}/"
+        cmd=f"mkdir -p {cdir}"
+        os.system(cmd)
+    print()
+    for fi,fky in enumerate(fileMapToProcess):
+        print(f"\r   Adding job for [{fi:>3} / {len(fileMapToProcess)}]   ",end="")
         miniAODfile=fileDB[dataset][fky]['lfs']
         cmd ="\n\n"
         cmd+=f"echo Processing {miniAODfile}\n"
@@ -127,12 +129,53 @@ if args.execute_parent_eval:
         cmd=cmd.replace('@@SUCESSDBFILENAME',sucessfull_filedb_filename)
         cmd=cmd.replace('@@FAILDBFILENAME',fail_filedb_filename)
         commandBlock+=cmd
-    with open('run.sh','w') as f:
-        cmd=utl.TEMPLATE_RUN_SCRIPT
-        cmd=cmd.replace("@@CODEBLOCK",commandBlock)
-        f.write(cmd)
-    os.system('chmod +x run.sh')
-    cmd=f'cp run.sh bkp/runSripts/run_{unique_tag}.sh'
-    print(cmd)
-    os.system(cmd)
+        if args.doCondor:
+            ofname=f"{cdir}/run_{fi}.sh"
+            with open(ofname,'w') as f:
+                cmd=utl.TEMPLATE_CRUN_SCRIPT
+                cmd=cmd.replace("@@CODEBLOCK",commandBlock)
+                cmd=cmd.replace("@@RUNSCRIPTNAME",ofname)
+                f.write(cmd)
+            os.system(f'chmod +x {ofname}')
+            commandBlock=""
+    print()
+    if args.doCondor:
+        clogbaseDir=f"{CONDOR_LOG_BASE}/Condor/{unique_tag}/"
+        cmd=f"mkdir -p {clogbaseDir}"
+        os.system(cmd)
+        sub=utl.TEMPLATE_CONDOR_SUB.replace("@@PWD",pwd)
+        sub=sub.replace('@@CDIR',cdir)
+        sub=sub.replace('@@CLOGBASE',clogbaseDir)
+        condor_sub_filename=f"{cdir}/condor_submit.jdl"
+        with open(condor_sub_filename,'w') as f:
+            f.write( sub )
+        print(f"Condor jobs made at {cdir}")
+        if args.doCondorSubmission:
+            cmd=f'condor_submit {condor_sub_filename}'
+            print(cmd)
+            os.system(cmd)
 
+        # submit script
+    else:
+        with open('run.sh','w') as f:
+            cmd=utl.TEMPLATE_RUN_SCRIPT
+            cmd=cmd.replace("@@CODEBLOCK",commandBlock)
+            f.write(cmd)
+        os.system('chmod +x run.sh')
+        cmd=f'cp run.sh bkp/runSripts/run_{unique_tag}.sh'
+        print(cmd)
+        os.system(cmd)
+
+if not args.skip_db_update:
+    cmd=f'cp {filedb_filename} bkp/{unique_tag}.{filedb_filename.split("/")[-1]}'
+    cmd=f'zip bkp/{unique_tag}.{filedb_filename.split("/")[-1]}.zip {filedb_filename}'
+    print("Backing up fileDB : ",cmd)
+    os.system(cmd)
+    with open(filedb_filename,'w') as f:
+        metaData['timestamp']=timestamp
+        metaData['prev_tag']=unique_tag
+        fileDataStore['METADATA']=metaData
+        fileDataStore['fileDB']=fileDB
+        json.dump(fileDataStore,f,indent=4)
+
+os.system(f"rm *{unique_tag}*")

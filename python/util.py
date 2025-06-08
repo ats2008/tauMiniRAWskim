@@ -1,19 +1,20 @@
 import os, json
 import datetime,uuid
 
-def getAllAvalableMiniRawMaps(filesToProces,fileDB):
-    cmd_prts_tpl='dasgoclient -query="parent file=@@FILE " --json > _parents.json'
-    cmd_siteQ_tpl='dasgoclient -query="site file=@@FILE " --json > _site.json'
+def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
+    cmd_prts_tpl=f'dasgoclient -query="parent file=@@FILE " --json > _parents_{unique_tag}.json'
+    cmd_siteQ_tpl=f'dasgoclient -query="site file=@@FILE " --json > _site_{unique_tag}.json'
     fileMaps={}
     allMissingFiles=[]
-    for fky in filesToProces:
+    for fi,fky in enumerate(filesToProces):
+        #if fi>4: break
         fl=fileDB[fky]['lfs']
         if 'parents' not in fileDB[fky]:
-            print(f"  > Getting parents for {fl}")
+            print(f"[{fi+1:>3} / {len(filesToProces)}]  > Getting parents for {fl}")
             cmd=cmd_prts_tpl.replace("@@FILE",fl)
             print(cmd)
             os.system(cmd)
-            with open("_parents.json") as f:
+            with open(f"_parents_{unique_tag}.json") as f:
                 pdata=json.load(f)
             pfiles=[]
             pfiles_isOnDisk=[]
@@ -24,18 +25,18 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB):
         pfiles=fileDB[fky]['parents']
         allParentsOnDisk=True
         for pfl in pfiles:
-            print(f"Checking site for parent {pfl}")
+            if not quiet: print(f"Checking site for parent {pfl}")
             cmd=cmd_siteQ_tpl.replace("@@FILE",pfl)
             #print(cmd)   
             os.system(cmd)
             isOnDisk=False
-            with open("_site.json") as f:
+            with open(f"_site_{unique_tag}.json") as f:
                 sdata=json.load(f)
                 for i in range(len(sdata)):
                     for pfn in sdata[i]['site'][0]['pfns']:
                         if sdata[i]['site'][0]['pfns'][pfn]['type']=='DISK':
                             rse=sdata[i]['site'][0]['pfns'][pfn]['rse']
-                            print(f"   > found file in : {rse}")
+                            if not quiet : print(f"   > found file in : {rse}")
                             isOnDisk=True
                             break
                     if isOnDisk:
@@ -44,13 +45,13 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB):
                 allParentsOnDisk=False
                 break
         if allParentsOnDisk:
-            print(f"All the parents for the MIiniAOD {fky} is on disk")
+            print(f"  > All the parents for the MIiniAOD {fky} is on disk")
             fileMaps[fky]={}
             fileMaps[fky]['miniAOD']=fl
             fileMaps[fky]['parents']=pfiles
         else:
             allMissingFiles.append(fky)
-            print(f"All parents not on disk ! will jave to skip this MiniAOD file ({fky})")
+            print(f"  > All parents not on disk ! will jave to skip this MiniAOD file ({fky})")
 
     return fileMaps
 
@@ -142,19 +143,24 @@ def updateSucessfullFilesDB(DB_FNAME,fky,reason,runs=None,lumis=None,timestamp=N
 
 CMD_CMSRUN_TPL="""
 cd $SCRATCH_DIR
+echo cmsRun tau_tagAndProbeRun3_skimmer.py inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
 cmsRun tau_tagAndProbeRun3_skimmer.py inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
 ECOD=$?
 if [ $ECOD -eq 0 ]; then
     mv @@OUTPUTFILE @@DESTINATION
     if [ $? -eq 0 ] ; then
         cd @@PWD
+        echo python3 python/updateSucessfullFilesDB.py --DBFileName @@SUCESSDBFILENAME --FileDBName @@FILEDBFNAME --key @@KEY --dataset @@DSET --reason "sucessfull skimming at jobs from @@TIMESTAMP!"
         python3 python/updateSucessfullFilesDB.py --DBFileName @@SUCESSDBFILENAME --FileDBName @@FILEDBFNAME --key @@KEY --dataset @@DSET --reason "sucessfull skimming at jobs from @@TIMESTAMP!"
+        mv @@RUNSCRIPTNAME @@RUNSCRIPTNAME.sucess
     else
         cd @@PWD
+        echo python3 python/updateMissingFilesDB.py  --DBFileName @@FAILDBFILENAME --key @@KEY --reason "failure to copy file to destination"
         python3 python/updateMissingFilesDB.py  --DBFileName @@FAILDBFILENAME --key @@KEY --reason "failure to copy file to destination"
     fi
 else    
     cd @@PWD
+    echo python3 python/updateMissingFilesDB.py  --DBFileName @@FAILDBFILENAME --key @@KEY --reason "cmsRun Failed with exit code $ECOD"
     python3 python/updateMissingFilesDB.py  --DBFileName @@FAILDBFILENAME --key @@KEY --reason "cmsRun Failed with exit code $ECOD"
 fi
 """
@@ -167,13 +173,44 @@ export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u13452
 cd /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6
 set +x
 eval `scramv1 runtime -sh`
-set -x
 SCRATCH_DIR=`mktemp -d`
 cd $SCRATCH_DIR
 cp /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3_skimmer.py .
 @@CODEBLOCK
 echo JOB exiting at `date`
 """
+
+TEMPLATE_CRUN_SCRIPT="""#!/bin/bash
+if [[ -z "${_CONDOR_SCRATCH_DIR}" ]]; then
+    _CONDOR_SCRATCH_DIR=`mktemp -d`
+    echo _CONDOR_SCRATCH_DIR was not set, setting it to $_CONDOR_SCRATCH_DIR
+else
+    echo CONDOR_SCRATCH_DIR is $_CONDOR_SCRATCH_DIR
+fi
+cd $_CONDOR_SCRATCH_DIR
+export SCRATCH_DIR=$CONDOR_SCRATCH_DIR
+source /cvmfs/cms.cern.ch/cmsset_default.sh 
+set -x
+export HOME=/afs/cern.ch/user/a/athachay
+export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u134523
+cd /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6
+set +x
+eval `scramv1 runtime -sh`
+#set -x
+cd $SCRATCH_DIR
+cp /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3_skimmer.py .
+@@CODEBLOCK
+echo JOB exiting at `date`
+"""
+   
    
 
+TEMPLATE_CONDOR_SUB="""executable = $(filename)
+output = @@CLOGBASE/$Fn(filename).$(Cluster).stdout
+error = @@CLOGBASE/$Fn(filename).$(Cluster).stderr
+log = $Fp(filename).$(Cluster).log
+request_cpus = 2
++JobFlavour = "microcentury"
+queue filename matching (@@CDIR/*.sh)
+"""
    

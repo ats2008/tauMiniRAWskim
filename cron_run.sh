@@ -1,8 +1,10 @@
 #!/bin/bash
+source /cvmfs/cms.cern.ch/cmsset_default.sh
 echo "=====" >> cronlog
 echo "Beging the job ! " 
 echo "Beging the job ! " >> cronlog
 date >> cronlog
+date
 export HOME=/afs/cern.ch/user/a/athachay
 export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u134523
 python3 python/getNewFiles.py  -c metadata/muon0_config.json --exec
