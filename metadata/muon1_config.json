@@ -1,4 +1,5 @@
 {
+    "tag" : "MUON1",
     "dataset" : "/Muon1/Run2025C-PromptReco-v1/MINIAOD",
     "filelist_db" : "metadata/fileDB.MUON1.json",
     "failedFile_db" : "metadata/missingFileDB.MUON1.json",

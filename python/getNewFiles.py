@@ -26,6 +26,8 @@ args = parser.parse_args()
 #dataset='Muon0'
 with open(args.configFile) as f:
     run_config=json.load(f)
+    tag=run_config['tag']
+    unique_tag=tag+"_"+unique_tag
     dataset=run_config['dataset']
     filedb_filename=run_config['filelist_db']
     fail_filedb_filename=run_config['failedFile_db']
@@ -83,6 +85,7 @@ for fi,fky in enumerate(newFileStore):
 if len(filesToProces) < 1 :
     print("No New files to process ! exiting ")
     os.system("echo echo NO Files To Process  > run.sh ; chmod +x run.sh")
+    os.system(f"rm *{unique_tag}*")
     exit(0)
 
 print(f"{len(filesToProces)}  MiniAOD Files to process.\n\t\t"+

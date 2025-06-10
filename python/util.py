@@ -11,7 +11,7 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
         #if fi>4: break
         fl=fileDB[fky]['lfs']
         if 'parents' not in fileDB[fky]:
-            print(f"[nProcessed : {fi+1:>3} / {len(filesToProces)} ] [ nFound  : {nFound}]  / {len(filesToProces)} ]  > Getting parents for {fl}")
+            print(f"[nProcessed : {fi+1:>3} / {len(filesToProces)} ] [ nFound  : {nFound} / {len(filesToProces)} ]  > Getting parents for {fl}")
             cmd=cmd_prts_tpl.replace("@@FILE",fl)
             print(cmd)
             os.system(cmd)
@@ -59,10 +59,10 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
 
  
 def updateMissingFilesDB(MISSINGFILES_DB_FNAME,fky,reason,timestamp=None):
-    missingRecord={}
-    missingRecord['time']=timestamp
-    missingRecord['reason']=reason
-    
+    if isinstance(fky,str):
+        fkyList=[fky]
+    else:
+        fkyList=fky
     missingFilesDB={}
     metaData={}
     print(f"Opening missing-file-database {MISSINGFILES_DB_FNAME} ")
@@ -81,10 +81,13 @@ def updateMissingFilesDB(MISSINGFILES_DB_FNAME,fky,reason,timestamp=None):
     if 'timestamp' in metaData:
         print("   > The fileDB was last re-processed on ",metaData['timestamp'])
     
-    
-    if fky in missingFilesDB:
-        print(f"{fky} was already missing ! will update the entry")
-    missingFilesDB[fky]=missingRecord
+    for fky in fkyList:
+        missingRecord={}
+        missingRecord['time']=timestamp
+        missingRecord['reason']=reason
+        if fky in missingFilesDB:
+            print(f"{fky} was already missing ! will update the entry")
+        missingFilesDB[fky]=missingRecord
     now = datetime.datetime.now() # current date and time
     uq=uuid.uuid4().hex[:6].upper()
     unique_tag=now.strftime("%d%b%y_%Hh%Mm%Ss")+f"_{uq}"
@@ -132,15 +135,15 @@ def updateSucessfullFilesDB(DB_FNAME,fky,reason,runs=None,lumis=None,timestamp=N
     now = datetime.datetime.now() # current date and time
     uq=uuid.uuid4().hex[:6].upper()
     unique_tag=now.strftime("%d%b%y_%Hh%Mm%Ss")+f"_{uq}"
+    metaData['timestamp']=timestamp
+    metaData['prev_tag']=unique_tag
+    data['METADATA']=metaData
+    data['FilesDB']=FilesDB
     cmd=f'cp {DB_FNAME} bkp/{unique_tag}.{DB_FNAME.split("/")[-1]}'
     cmd=f'zip bkp/{unique_tag}.{DB_FNAME.split("/")[-1]}.zip {DB_FNAME}'
     print("Backing up  file DB : ",cmd)
     os.system(cmd)
     with open(DB_FNAME,'w') as f:
-        metaData['timestamp']=timestamp
-        metaData['prev_tag']=unique_tag
-        data['METADATA']=metaData
-        data['FilesDB']=FilesDB
         json.dump(data,f,indent=4)
 
 CMD_CMSRUN_TPL="""
@@ -190,7 +193,8 @@ else
     echo CONDOR_SCRATCH_DIR is $_CONDOR_SCRATCH_DIR
 fi
 cd $_CONDOR_SCRATCH_DIR
-export SCRATCH_DIR=$CONDOR_SCRATCH_DIR
+pwd
+export SCRATCH_DIR=$_CONDOR_SCRATCH_DIR
 source /cvmfs/cms.cern.ch/cmsset_default.sh 
 set -x
 export HOME=/afs/cern.ch/user/a/athachay
@@ -200,6 +204,7 @@ set +x
 eval `scramv1 runtime -sh`
 #set -x
 cd $SCRATCH_DIR
+pwd
 cp /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3_skimmer.py .
 @@CODEBLOCK
 echo JOB exiting at `date`

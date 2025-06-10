@@ -10,4 +10,5 @@ export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u13452
 python3 python/getNewFiles.py  -c metadata/muon0_config.json --exec --doCondor --doCondorSubmission -q
 echo "Run script made " >> cronlog
 #./run.sh
+condor_q
 echo "All done! MUON-0"

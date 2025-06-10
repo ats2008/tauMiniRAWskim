@@ -16,5 +16,5 @@ MISSINGFILES_DB_FNAME=args.DBFileName
 fky=args.key
 reason=args.reason
 
-utl.updateMissingFilesDB(MISSINGFILES_DB_FNAME,fky,reason,timestamp=TIMESTAMP)
+utl.updateMissingFilesDB(MISSINGFILES_DB_FNAME,[fky],reason,timestamp=TIMESTAMP)
 
