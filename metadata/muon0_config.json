@@ -1,5 +1,6 @@
 {
     "tag" : "MUON0",
+    "destination" : "/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/MUON0/",
     "dataset" : "/Muon0/Run2025C-PromptReco-v1/MINIAOD",
     "filelist_db" : "metadata/fileDB.MUON0.json",
     "failedFile_db" : "metadata/missingFileDB.MUON0.json",

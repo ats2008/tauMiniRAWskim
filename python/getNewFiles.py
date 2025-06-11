@@ -24,6 +24,7 @@ args = parser.parse_args()
 #fail_filedb_filename='MissingFilesDB.mu0.json'
 #sucessfull_filedb_filename='SucessfullFilesDB.mu0.json'
 #dataset='Muon0'
+destination='/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/'
 with open(args.configFile) as f:
     run_config=json.load(f)
     tag=run_config['tag']
@@ -33,7 +34,6 @@ with open(args.configFile) as f:
     fail_filedb_filename=run_config['failedFile_db']
     sucessfull_filedb_filename=run_config['sucessFile_db']
     CONDOR_LOG_BASE=run_config['CONDOR_LOG_BASE']
-destination='/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/'
 newFileStore={}
 
 cmd_prts_tpl=f'dasgoclient -query="file run lumi dataset=@@DSET" --json > _allfiles_{unique_tag}.json'
