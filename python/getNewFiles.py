@@ -30,6 +30,7 @@ with open(args.configFile) as f:
     tag=run_config['tag']
     unique_tag=tag+"_"+unique_tag
     dataset=run_config['dataset']
+    destination=run_config['destination']
     filedb_filename=run_config['filelist_db']
     fail_filedb_filename=run_config['failedFile_db']
     sucessfull_filedb_filename=run_config['sucessFile_db']
