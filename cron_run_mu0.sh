@@ -1,12 +1,12 @@
 #!/bin/bash
 source /cvmfs/cms.cern.ch/cmsset_default.sh
+export HOME=/afs/cern.ch/user/a/athachay
+export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u134523
 echo "=====" >> cronlog
 echo "Beging the job ! MUON-0 " 
 echo "Beging the job ! MUON-0" >> cronlog
 date >> cronlog
 date
-export HOME=/afs/cern.ch/user/a/athachay
-export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u134523
 
 dasgoclient -query="dataset=/Muon0/Run2025*-PromptReco-v*/MINIAOD"  > mu0.ds
 if diff mu0.ds metadata/mu0.ds.bak ; then
