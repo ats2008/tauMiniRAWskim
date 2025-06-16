@@ -19,11 +19,6 @@ parser.add_argument(     "--doCondorSubmission", help="submit condor jobs",actio
 parser.add_argument( "-q" , "--quiet", help="Quite mode",action='store_true')
 args = parser.parse_args()
 
-#flistFileIn='runlumiFile.json'
-#filedb_filename='fileDB.mu0.json'
-#fail_filedb_filename='MissingFilesDB.mu0.json'
-#sucessfull_filedb_filename='SucessfullFilesDB.mu0.json'
-#dataset='Muon0'
 destination='/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/'
 with open(args.configFile) as f:
     run_config=json.load(f)
