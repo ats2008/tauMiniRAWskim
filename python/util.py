@@ -215,7 +215,7 @@ echo JOB exiting at `date`
 TEMPLATE_CONDOR_SUB="""executable = $(filename)
 output = @@CLOGBASE/$Fn(filename).$(Cluster).stdout
 error = @@CLOGBASE/$Fn(filename).$(Cluster).stderr
-log = $Fp(filename).$(Cluster).log
+log = @@CLOGBASE/$Fn(filename).$(Cluster).log
 request_cpus = 2
 +JobFlavour = "microcentury"
 queue filename matching (@@CDIR/*.sh)
