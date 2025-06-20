@@ -5,7 +5,7 @@ import datetime,uuid
 now = datetime.datetime.now() # current date and time
 uq=uuid.uuid4().hex[:6].upper()
 unique_tag=now.strftime("%d%b%y_%Hh%Mm%Ss")+f"_{uq}"
-timestamp=now.strftime("%m/%B/%Y, %H:%M:%S")
+timestamp=now.strftime("%d/%B/%Y, %H:%M:%S")
 
 runFileIn='allruns.mu0'
 runDBFileName='runDB.mu0.json'

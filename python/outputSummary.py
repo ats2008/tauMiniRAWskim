@@ -7,7 +7,7 @@ import argparse
 now = datetime.datetime.now() # current date and time
 uq=uuid.uuid4().hex[:6].upper()
 unique_tag=now.strftime("%d%b%y_%Hh%Mm%Ss")+f"_{uq}"
-timestamp=now.strftime("%m/%B/%Y, %H:%M:%S")
+timestamp=now.strftime("%d/%B/%Y, %H:%M:%S")
 pwd=os.getcwd()
 
 parser = argparse.ArgumentParser()
@@ -60,15 +60,20 @@ print("opening file db : ",filesDBName)
 with open(filesDBName) as f:
     data=json.load(f)
 
-fileDB=data['fileDB'][dataset]
-print(f"Opened files db with {len(fileDB)} files")
+fileDB=data['fileDB']
+print(f"Opened files db with { sum([len(fileDB[ds]) for ds in fileDB ]) } files")
 zombieFiles=[]
 dbFiles=[]
 for fky in ftags:
-    if fky not in fileDB:
+    got=False
+    for ds in fileDB:
+        if fky in fileDB[ds]:
+            got=True
+    if not got:
         zombieFiles.append(fky)
     else:
         dbFiles.append(fky)        
+
 if len(zombieFiles) > 0:
     print(f"Zombie root files (# {len(zombieFiles)}) found in {base}")
 
@@ -80,7 +85,10 @@ print(f"Total number of files matched in DB : {len(dbFiles):>4}")
 
 runLumiDB={}
 for fky in dbFiles:
-    for run,lumis in zip(fileDB[fky]['runs'],fileDB[fky]['lumis']):
+    for ds_ in fileDB:
+        if fky in fileDB[ds_]:
+            ds=ds_
+    for run,lumis in zip(fileDB[ds][fky]['runs'],fileDB[ds][fky]['lumis']):
         if run not in runLumiDB:
             runLumiDB[run]=[]
         runLumiDB[run]+=lumis
