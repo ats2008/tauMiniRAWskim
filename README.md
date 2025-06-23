@@ -59,7 +59,7 @@ voms-proxy-info
 ## Helper scripts and handy commands
 * Print the status of the dataset and skims without updating the database files used for keeping track of the skim
 ```
-python3 python/getNewFiles.py -c metadata/muon1_config.json  --skip_db_update
+python3 python/skimNewFiles.py -c metadata/muon1_config.json  --skip_db_update
 ```
 * Print the status of the skimmed datasets
 ```
@@ -69,9 +69,14 @@ python3 python/outputSummary.py  -c metadata/muon0_config.json
 ```
 python3 python/updateSummaryFiles.py  -c metadata/muon1_config.json
 ## to export the missing files
-python3 python/updateSummaryFiles.py  -c metadata/muon1_config.json
+python3 python/updateSummaryFiles.py  -c metadata/muon1_config.json -e
 ```
-
+*  It is also possible to use the exported filelist from here to be used to submit jobs to force skimming.
+```
+# please use judisiously , its not everyday that the RAW on tape comes back to disk !nd running this foreced skimming will not suceed !
+python3 python/skimNewFiles.py -c metadata/muon1_config_v1.json --doCondor --exec --force_filelist missingFiles.fls --doCondorSubmission
+```
+    
 * Print the root files under a directory ( after a recusive scan for all the folders under the passed `path`). This file list could be used to run ntuplization jobs
 ```
 python3 python/printRootFiles.py -b /eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/MUON0,/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/MUON1 > mu.fls
