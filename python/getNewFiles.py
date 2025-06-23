@@ -16,6 +16,8 @@ parser.add_argument('-e',"--execute_parent_eval", help="Execute the skimming",ac
 parser.add_argument(     "--skip_db_update", help="Skip updaing the database with new files",action='store_true')
 parser.add_argument(     "--doCondor", help="Make condor jobs",action='store_true')
 parser.add_argument(     "--doCondorSubmission", help="submit condor jobs",action='store_true')
+parser.add_argument(     "--force_filelist", help="Force a filelist into the DB",default=None)
+parser.add_argument(     "--skip_parents_on_disk_check", help="Force job creation without checking if parents are there on disk",default=False,action='store_true')
 parser.add_argument( "-q" , "--quiet", help="Quite mode",action='store_true')
 args = parser.parse_args()
 
@@ -31,24 +33,6 @@ with open(args.configFile) as f:
     sucessfull_filedb_filename=run_config['sucessFile_db']
     CONDOR_LOG_BASE=run_config['CONDOR_LOG_BASE']
 newFileStore={}
-
-cmd_prts_tpl=f'dasgoclient -query="file run lumi dataset=@@DSET" --json > _allfiles_{unique_tag}.json'
-cmd=cmd_prts_tpl.replace("@@DSET",dataset)
-print(f"Reading latest filelist from {dataset}")
-print(cmd)
-os.system(cmd)
-flistFileIn=f'_allfiles_{unique_tag}.json'
-print(f"Opening file with run list {flistFileIn} ")
-with open(flistFileIn) as f:
-    allfiles=json.load(f)
-    for item in allfiles:
-        file_lfs=item['file'][0]['name']
-        filename=file_lfs.split("/")[-1].replace(".root","")
-        newFileStore[filename]={}
-        newFileStore[filename]['lfs']=file_lfs
-        newFileStore[filename]['runs']=[it['run_number'] for it in item['run'] ]
-        newFileStore[filename]['lumis']=[it['number'] for it in item['lumi'] ]
-    print("Number files got : ",len(newFileStore))
 
 print(f"Opening file-database {filedb_filename} ")
 if os.path.exists(filedb_filename):    
@@ -66,10 +50,51 @@ if 'METADATA' in fileDataStore:
 
 if 'timestamp' in metaData:
     print("   > The fileDB was last re-processed on ",metaData['timestamp'])
-
-filesToProces={}
 if dataset not in fileDB:
     fileDB[dataset]={}
+
+filesToProces={}
+ntoDo=0
+if args.force_filelist is None:
+    cmd_prts_tpl=f'dasgoclient -query="file run lumi dataset=@@DSET" --json > _allfiles_{unique_tag}.json'
+    cmd=cmd_prts_tpl.replace("@@DSET",dataset)
+    print(f"Reading latest filelist from {dataset}")
+    print(cmd)
+    os.system(cmd)
+    flistFileIn=f'_allfiles_{unique_tag}.json'
+    print(f"Opening file with run list {flistFileIn} ")
+    with open(flistFileIn) as f:
+        allfiles=json.load(f)
+        for item in allfiles:
+            file_lfs=item['file'][0]['name']
+            filename=file_lfs.split("/")[-1].replace(".root","")
+            newFileStore[filename]={}
+            newFileStore[filename]['lfs']=file_lfs
+            newFileStore[filename]['runs']=[it['run_number'] for it in item['run'] ]
+            newFileStore[filename]['lumis']=[it['number'] for it in item['lumi'] ]
+        print("Number files got : ",len(newFileStore))
+
+else:
+    print("Opening file list from : ",args.force_filelist)
+    with open(args.force_filelist) as f:
+        txt=f.readlines()
+        flist=[l[:-1] for l in txt]
+    
+    for file_lfs in flist:
+        filename=file_lfs.split("/")[-1].replace(".root","")
+        if filename in fileDB[dataset]:
+            newFileStore[filename]=fileDB[dataset][filename]
+        else : 
+            newFileStore[filename]={}
+            newFileStore[filename]['lfs']=file_lfs
+            ### UPDATE runs and lumis after fetching it from das
+            #newFileStore[filename]['runs']=[it['run_number'] for it in item['run'] ]
+            #newFileStore[filename]['lumis']=[it['number'] for it in item['lumi'] ]
+        
+        filesToProces[filename]=newFileStore[filename]
+        ntoDo+=1
+        if ntoDo>=args.nMiniAODMax: break
+
 print(f"Using filedb with {len(fileDB[dataset])} files")
 ntoDo=0
 for fi,fky in enumerate(newFileStore):
@@ -78,6 +103,8 @@ for fi,fky in enumerate(newFileStore):
         fileDB[dataset][fky]=newFileStore[fky]
         ntoDo+=1
     if ntoDo>=args.nMiniAODMax: break
+
+
 if len(filesToProces) < 1 :
     print("No New files to process ! exiting ")
     os.system("echo echo NO Files To Process  > run.sh ; chmod +x run.sh")
@@ -87,15 +114,16 @@ if len(filesToProces) < 1 :
 print(f"{len(filesToProces)}  MiniAOD Files to process.\n\t\t"+
        "\n\t\t".join([str(k) for  i,k  in enumerate(filesToProces) if i <10  ]))
 
-
 if args.execute_parent_eval:
-
-    fileMapToProcess=utl.getAllAvalableMiniRawMaps(filesToProces,fileDB[dataset],unique_tag=unique_tag,quiet=args.quiet)
+    fileMapToProcess=utl.getAllAvalableMiniRawMaps(
+                                filesToProces,fileDB[dataset],unique_tag=unique_tag,
+                                quiet=args.quiet,skip_on_disk_check=args.skip_parents_on_disk_check
+                           )
     for fky in filesToProces:
         if (fky not in fileMapToProcess ) :
             print(" Registering ",fky," as missing dataset ")
             reason='Parent missing from disk'
-            utl.updateMissingFilesDB(fail_filedb_filename,fky,reason,timestamp=timestamp)
+            #utl.updateMissingFilesDB(fail_filedb_filename,fky,reason,timestamp=timestamp)
     
     commandBlock=""
     cmd_cmsRun_tpl=str(utl.CMD_CMSRUN_TPL)

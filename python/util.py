@@ -1,7 +1,7 @@
 import os, json
 import datetime,uuid
 
-def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
+def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False,skip_on_disk_check=False):
     cmd_prts_tpl=f'dasgoclient -query="parent file=@@FILE " --json > _parents_{unique_tag}.json'
     cmd_siteQ_tpl=f'dasgoclient -query="site file=@@FILE " --json > _site_{unique_tag}.json'
     fileMaps={}
@@ -26,7 +26,9 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
         pfiles=fileDB[fky]['parents']
         allParentsOnDisk=True
         for pfl in pfiles:
-            if not quiet: print(f"Checking site for parent {pfl}")
+            if skip_on_disk_check:
+                break
+            #if not quiet: print(f"Checking site for parent {pfl}")
             cmd=cmd_siteQ_tpl.replace("@@FILE",pfl)
             #print(cmd)   
             os.system(cmd)
@@ -37,7 +39,7 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
                     for pfn in sdata[i]['site'][0]['pfns']:
                         if sdata[i]['site'][0]['pfns'][pfn]['type']=='DISK':
                             rse=sdata[i]['site'][0]['pfns'][pfn]['rse']
-                            if not quiet : print(f"   > found file in : {rse}")
+                            #if not quiet : print(f"   > found file in : {rse}")
                             isOnDisk=True
                             break
                     if isOnDisk:
@@ -46,14 +48,16 @@ def getAllAvalableMiniRawMaps(filesToProces,fileDB,unique_tag="",quiet=False):
                 allParentsOnDisk=False
                 break
         if allParentsOnDisk:
-            print(f"  > All the parents for the MIiniAOD {fky} is on disk")
+            if not quiet:
+                print(f"[nProcessed : {fi+1:>3} / {len(filesToProces)} ] [ nFound  : {nFound} / {len(filesToProces)} ]  | All the parents for the MIiniAOD {fky} is on disk")
             fileMaps[fky]={}
             fileMaps[fky]['miniAOD']=fl
             fileMaps[fky]['parents']=pfiles
             nFound+=1
         else:
             allMissingFiles.append(fky)
-            print(f"  > All parents not on disk ! will jave to skip this MiniAOD file ({fky})")
+            if not quiet:
+                print(f"[nProcessed : {fi+1:>3} / {len(filesToProces)} ] [ nFound  : {nFound} / {len(filesToProces)} ] | All parents not on disk ! will jave to skip this MiniAOD file ({fky})")
 
     return fileMaps
 
