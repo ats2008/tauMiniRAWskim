@@ -152,8 +152,8 @@ def updateSucessfullFilesDB(DB_FNAME,fky,reason,runs=None,lumis=None,timestamp=N
 
 CMD_CMSRUN_TPL="""
 cd $SCRATCH_DIR
-echo cmsRun tau_tagAndProbeRun3_skimmer.py inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
-cmsRun tau_tagAndProbeRun3_skimmer.py inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
+echo cmsRun @@CMSRUN_CFG inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
+cmsRun @@CMSRUN_CFG inputFiles=@@INPUTFILE secondaryInputFiles=@@SECONDARYFILES outputFile=@@OUTPUTFILE maxEvents=-1 
 ECOD=$?
 if [ $ECOD -eq 0 ]; then
     mv @@OUTPUTFILE @@DESTINATION
@@ -201,15 +201,15 @@ pwd
 export SCRATCH_DIR=$_CONDOR_SCRATCH_DIR
 source /cvmfs/cms.cern.ch/cmsset_default.sh 
 set -x
-export HOME=/afs/cern.ch/user/a/athachay
-export X509_USER_PROXY=/afs/cern.ch/user/a/athachay/private/.proxy/x509up_u134523
-cd /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6
+export HOME=@@HMOE
+export X509_USER_PROXY=@@X509_USER_PROXY
+cd @@CMSSW_DIR 
 set +x
 eval `scramv1 runtime -sh`
 #set -x
 cd $SCRATCH_DIR
 pwd
-cp /afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3_skimmer.py .
+cp @@CMSRUN_CFG .
 @@CODEBLOCK
 echo JOB exiting at `date`
 """

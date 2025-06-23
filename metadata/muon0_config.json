@@ -5,5 +5,7 @@
     "filelist_db" : "metadata/fileDB.MUON0.json",
     "failedFile_db" : "metadata/missingFileDB.MUON0.json",
     "sucessFile_db" : "metadata/sucessFileDB.MUON0.json",
+    "cmssw_base":"/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/",
+    "run_cfg" : "/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3_skimmer.py",
     "CONDOR_LOG_BASE" : "/afs/cern.ch/work/a/athachay/private/l1egamma/automation/Condor/logs"
 }
