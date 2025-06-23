@@ -32,6 +32,9 @@ with open(args.configFile) as f:
     fail_filedb_filename=run_config['failedFile_db']
     sucessfull_filedb_filename=run_config['sucessFile_db']
     CONDOR_LOG_BASE=run_config['CONDOR_LOG_BASE']
+    cmssw_base=run_config['cmssw_base']
+    cmsrun_cfg=run_config['run_cfg']
+
 newFileStore={}
 
 print(f"Opening file-database {filedb_filename} ")
@@ -155,11 +158,15 @@ if args.execute_parent_eval:
         cmd=cmd.replace('@@FILEDBFNAME',filedb_filename)
         cmd=cmd.replace('@@SUCESSDBFILENAME',sucessfull_filedb_filename)
         cmd=cmd.replace('@@FAILDBFILENAME',fail_filedb_filename)
+        cmd=cmd.replace('@@CMSRUN_CFG',cmsrun_cfg)
         commandBlock+=cmd
         if args.doCondor:
             ofname=f"{cdir}/run_{fi}.sh"
             with open(ofname,'w') as f:
                 cmd=utl.TEMPLATE_CRUN_SCRIPT
+                cmd=cmd.replace("@@HOME",HOME)
+                cmd=cmd.replace("@@X509_USER_PROXY",X509_USER_PROXY)
+                cmd=cmd.replace("@@CMSSW_DIR",cmssw_base)
                 cmd=cmd.replace("@@CODEBLOCK",commandBlock)
                 cmd=cmd.replace("@@RUNSCRIPTNAME",ofname)
                 f.write(cmd)
