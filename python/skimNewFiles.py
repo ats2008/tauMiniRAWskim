@@ -9,6 +9,10 @@ unique_tag=now.strftime("%d%b%y_%Hh%Mm%Ss")+f"_{uq}"
 timestamp=now.strftime("%d/%B/%Y, %H:%M:%S")
 pwd=os.getcwd()
 
+
+HOME=os.environ.get('HOME')
+X509_USER_PROXY=os.environ.get('X509_USER_PROXY')
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-c',"--configFile", help="Config File",default='muon0_config.json')
 parser.add_argument('-n',"--nMiniAODMax", help="Number miniaods to process",default=1000000,type=int)
@@ -22,6 +26,7 @@ parser.add_argument( "-q" , "--quiet", help="Quite mode",action='store_true')
 args = parser.parse_args()
 
 destination='/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/skims/v0/'
+
 with open(args.configFile) as f:
     run_config=json.load(f)
     tag=run_config['tag']
