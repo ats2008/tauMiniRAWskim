@@ -9,7 +9,13 @@ echo "Beging the job ! MUON-0 "
 echo "Beging the job ! MUON-0" >> cronlog
 date >> cronlog
 date
-
+python3 python/checkProxy.py
+EC=$?
+if [ $EC -eq 0 ] ; then
+    echo "Valid proxy exists !"
+else 
+    echo "No valid proxy exists ! exiting the script"
+fi
 dasgoclient -query="dataset=/Muon0/Run2025*-PromptReco-v*/MINIAOD"  > mu0.ds
 if diff mu0.ds metadata/mu0.ds.bak ; then
    echo "No new dataset appeared in Muon0"

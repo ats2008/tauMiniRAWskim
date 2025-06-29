@@ -84,14 +84,18 @@ print(f"Total number of unique files        : {len(ftags):>4}")
 print(f"Total number of files matched in DB : {len(dbFiles):>4}")
 
 runLumiDB={}
+badRunLumiCol=False
 for fky in dbFiles:
     for ds_ in fileDB:
         if fky in fileDB[ds_]:
             ds=ds_
-    for run,lumis in zip(fileDB[ds][fky]['runs'],fileDB[ds][fky]['lumis']):
-        if run not in runLumiDB:
-            runLumiDB[run]=[]
-        runLumiDB[run]+=lumis
+    if 'runs' in fileDB[ds][fky]:
+        for run,lumis in zip(fileDB[ds][fky]['runs'],fileDB[ds][fky]['lumis']):
+            if run not in runLumiDB:
+                runLumiDB[run]=[]
+            runLumiDB[run]+=lumis
+    else:
+        badRunLumiCol=True
 
 runLumiDBToExport={}
 for run in runLumiDB:
@@ -112,6 +116,8 @@ for run in runLumiDB:
     runLumiDBToExport[f"{run}"]=lmList
 ofname=f"exportedRunLumi_{tag}.json"
 print("Exporting run-lumi to ",ofname)
+if badRunLumiCol:
+    print("Note that this run-lumi collection is not exhaustive, there are tleast some fles in te databse that does not have run-lumi info")
 with open(ofname,'w') as f:
     json.dump(runLumiDBToExport,f,indent=4)
 
