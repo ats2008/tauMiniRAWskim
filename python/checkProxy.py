@@ -46,7 +46,7 @@ msg['To']   = ','.join(target_email)
 print("Informing to ",target_email)
 #print("  > MSG \n",msg)
 s = smtplib.SMTP('localhost')
-#s.sendmail(me, target_email, msg.as_string())
+s.sendmail(me, target_email, msg.as_string())
 s.quit()
 if t==0:
     exit(1)
