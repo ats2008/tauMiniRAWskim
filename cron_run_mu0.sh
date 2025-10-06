@@ -15,6 +15,7 @@ if [ $EC -eq 0 ] ; then
     echo "Valid proxy exists !"
 else 
     echo "No valid proxy exists ! exiting the script"
+    exit 1
 fi
 dasgoclient -query="dataset=/Muon0/Run2025*-PromptReco-v*/MINIAOD"  > mu0.ds
 if diff mu0.ds metadata/mu0.ds.bak ; then

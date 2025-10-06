@@ -7,7 +7,8 @@ from input_cfg import process
 process.maxEvents.input = cms.untracked.int32(@@NEVENTS)
 process.source.fileNames = cms.untracked.vstring(@@FLIST)
 process.TFileService.fileName = cms.string('file:@@TEMPL_OUTFILE')
-process.source.secondaryFileNames.clear()
+if hasattr(process.source,'secondaryFileNames'):
+    process.source.secondaryFileNames.clear()
 
 #Setup FWK for multithreaded
 #process.options.numberOfThreads=cms.untracked.uint32(4)

@@ -65,6 +65,11 @@ python3 python/skimNewFiles.py -c metadata/muon1_config.json  --skip_db_update
 ```
 python3 python/outputSummary.py  -c metadata/muon0_config.json
 ```
+* Print daily summary status, looking at the conor submission folder 
+```
+python3 python/dailySummary.py  -b Condor/MUON0@ # for muon0 dataset
+```
+
 * Produce the list of files missing from the skim, and also print the overall status of the skim
 ```
 python3 python/updateSummaryFiles.py  -c metadata/muon1_config.json

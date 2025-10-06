@@ -1,9 +1,9 @@
 {
     "tag" : "unpacked",
-    "nFilesPerJob" : 100,
-    "fileList" : "mu.fls",
-    "destination" : "/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/ntuples/v0/",
-    "cmssw_base":"/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/",
-    "run_cfg" : "/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_6/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3.py",
+    "nFilesPerJob" : 10,
+    "fileList" : "muD.fls",
+    "destination" : "/eos/cms/store/group/dpg_trigger/comm_trigger/L1Trigger/athachay/phase1/taus/ntuples/v0/calop_v3_eraD/",
+    "cmssw_base":"/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_10/",
+    "run_cfg" : "/afs/cern.ch/work/a/athachay/private/l1egamma/2025/taus/CMSSW_15_0_10/src/TagAndProbeIntegrated/TagAndProbe/test/tau_tagAndProbeRun3.py",
     "CONDOR_LOG_BASE" : "/afs/cern.ch/work/a/athachay/private/l1egamma/automation/Condor/logs/"
 }

@@ -14,8 +14,8 @@ pwd=os.getcwd()
 parser = argparse.ArgumentParser()
 parser.add_argument('-c',"--configFile", help="Config File",default='muon0_config.json')
 parser.add_argument('-b',"--base", help="Base folder to look at",default=None)
-parser.add_argument('-e',"--exportMissingFiles", help="Export the missing filelist ",default=False,action='store_true')
-parser.add_argument(     "--doCondorSubmission", help="Make condor submission too",action='store_true')
+parser.add_argument('-n',"--nJobMax", help="Number of jobs to do",default=-1, type = int)
+parser.add_argument(     "--doCondorSubmission", help="do condor submission too",action='store_true')
 args = parser.parse_args()
 
 
@@ -97,6 +97,8 @@ print(cmd)
 os.system(cmd)
 
 for fi,fls in enumerate(split_flist):
+    if (args.nJobMax > -1) and fi>=args.nJobMax:
+        break
     print(f"\r   Adding job for [{fi:>3} / {len(split_flist)}]   ",end="")
     ofname=f"Ntuple_{fi}_{uq}.root"
     flist='\n\t\t'+',\n\t\t'.join(["'file:"+fl+"'" for fl in fls])
